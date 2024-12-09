@@ -1,51 +1,43 @@
 ﻿using filmapp.Models;
-using System.Xml.Linq;
+using filmapp.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
 namespace filmapp.Services
 {
-
-    public static class FilmService
+    public class FilmService
     {
-        static List<Film> Filmek { get; }
-        static int nextId = 5;
-        static FilmService()
+        private readonly FilmContext _context;
+
+        public FilmService(FilmContext context)
         {
-            Filmek = new List<Film>
-        {
-            new Film { Id = 1, Nev = "StarWars", KiadasEve=2022, Ertekeles=5, Kepneve="starwars.jpg" },
-            new Film { Id = 2, Nev = "Tenet", KiadasEve=2021, Ertekeles=4, Kepneve="tenet.jpg" },
-            new Film { Id = 3, Nev = "X-akták", KiadasEve=2018, Ertekeles=3, Kepneve="thexfiles.jpg" },
-            new Film { Id = 4, Nev = "Wednesday", KiadasEve=2022, Ertekeles=5, Kepneve="wednesday.jpg" }
-        };
+            _context = context;
         }
 
-        public static List<Film> GetAll() => Filmek;
+        public async Task<List<Film>> GetAllAsync() => await _context.Films.ToListAsync();
 
-        public static Film? Get(int id) => Filmek.FirstOrDefault(p => p.Id == id);
+        public async Task<Film?> GetAsync(int id) => await _context.Films.FindAsync(id);
 
-        public static void Add(Film film)
+        public async Task AddAsync(Film film)
         {
-            film.Id = nextId++;
-            Filmek.Add(film);
+            _context.Films.Add(film);
+            await _context.SaveChangesAsync();
         }
 
-        public static void Delete(int id)
+        public async Task UpdateAsync(Film film)
         {
-            var film = Get(id);
-            if (film is null)
-                return;
-
-            Filmek.Remove(film);
+            _context.Films.Update(film);
+            await _context.SaveChangesAsync();
         }
 
-        public static void Update(Film film)
+        public async Task DeleteAsync(int id)
         {
-            var index = Filmek.FindIndex(p => p.Id == film.Id);
-            if (index == -1)
-                return;
-
-            Filmek[index] = film;
+            var film = await GetAsync(id);
+            if (film != null)
+            {
+                _context.Films.Remove(film);
+                await _context.SaveChangesAsync();
+            }
         }
     }
-
 }

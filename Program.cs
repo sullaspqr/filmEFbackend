@@ -1,14 +1,23 @@
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.Extensions.FileProviders;
+using filmapp.Data;
+using filmapp.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-
 builder.Services.AddControllers();
-builder.Services.AddCors(c => { c.AddPolicy("AllowOrigin", 
-    options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()); });
-
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// Add services to the container.
+builder.Services.AddDbContext<FilmContext>(options =>
+    options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
+        new MySqlServerVersion(new Version(10, 4, 32))));
+builder.Services.AddScoped<FilmService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddCors(c => {
+    c.AddPolicy("AllowOrigin",
+    options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+});
+
 
 var app = builder.Build();
 
@@ -20,11 +29,9 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 app.UseHttpsRedirection();
-
+// Configure the HTTP request pipeline.
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

@@ -1,86 +1,51 @@
-﻿using Microsoft.AspNetCore.Http;
-using filmapp.Models;
+﻿using filmapp.Models;
 using filmapp.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace filmapp.Controllers
 {
-    [Route("[controller]")]
     [ApiController]
-
+    [Route("[controller]")]
     public class FilmController : ControllerBase
     {
-        public FilmController()
+        private readonly FilmService _filmService;
+
+        public FilmController(FilmService filmService)
         {
+            _filmService = filmService;
         }
 
-        // GET all action
         [HttpGet]
-        public ActionResult<List<Film>> GetAll() =>
-        FilmService.GetAll();
+        public async Task<IActionResult> GetAll() => Ok(await _filmService.GetAllAsync());
 
-        // GET by Id action
         [HttpGet("{id}")]
-        public ActionResult<Film> Get(int id)
+        public async Task<IActionResult> Get(int id)
         {
-            var film = FilmService.Get(id);
-
-            if (film == null)
-                return NotFound();
-
-            return film;
+            var film = await _filmService.GetAsync(id);
+            return film == null ? NotFound() : Ok(film);
         }
-        // POST action
+
         [HttpPost]
-        public IActionResult Create(Film film)
+        public async Task<IActionResult> Create(Film film)
         {
-            FilmService.Add(film);
+            await _filmService.AddAsync(film);
             return CreatedAtAction(nameof(Get), new { id = film.Id }, film);
         }
-        // PUT action
+
         [HttpPut("{id}")]
-        public IActionResult Update(int id, Film film)
+        public async Task<IActionResult> Update(int id, Film film)
         {
-            if (id != film.Id)
-                return BadRequest();
+            if (id != film.Id) return BadRequest();
 
-            var existingFilm = FilmService.Get(id);
-            if (existingFilm is null)
-                return NotFound();
-
-            FilmService.Update(film);
-
+            await _filmService.UpdateAsync(film);
             return NoContent();
         }
-        // DELETE action
+
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var film = FilmService.Get(id);
-
-            if (film is null)
-                return NotFound();
-
-            FilmService.Delete(id);
-
+            await _filmService.DeleteAsync(id);
             return NoContent();
         }
-        [HttpOptions]
-        
-        public IActionResult HandleOptions()
-        {
-            Response.Headers.Add("Allow", "GET, POST, OPTIONS");
-            return Ok();
-        }
-        [HttpOptions("{id}")]
-        public IActionResult Options(int id)
-        {
-            Response.Headers.Add("Access-Control-Allow-Origin", "*");
-            Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-            Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type");
-
-            return Ok(); // Válasz a CORS pre-flight kérésre
-        }
-
     }
 }
